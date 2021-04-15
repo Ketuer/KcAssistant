@@ -36,7 +36,8 @@
 </dependencies>
 ```
 
-### 快速开始
+### 快速开始 🔫
+登陆账号并获取用户信息，查询学期成绩和方案成绩：
 ```java
 public class Main {
     public static void main(String[] args)  {
