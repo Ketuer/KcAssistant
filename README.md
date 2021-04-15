@@ -21,19 +21,42 @@
 ### 添加依赖 🔮
 ```html
 <repositories>
-    <repository>
-        <id>crack-mvn-repo</id>
-        <url>https://raw.githubusercontent.com/Ketuer/BaiAssistant/main/repo</url>
-    </repository>
+  <repository>
+    <id>crack-mvn-repo</id>
+    <url>https://raw.githubusercontent.com/Ketuer/KcAssistant/main/repo</url>
+  </repository>
 </repositories>
 
-<dependencies> 
-    <dependency>
-        <groupId>crack.cduestc</groupId>
-        <artifactId>byjh</artifactId>
-        <version>1.1-Release</version>
-    </dependency>
+<dependencies>
+  <dependency>
+    <groupId>crack.cduestc</groupId>
+    <artifactId>jw</artifactId>
+    <version>1.0-Release</version>
+  </dependency>
 </dependencies>
 ```
 
 ### 快速开始
+```java
+public class Main {
+    public static void main(String[] args)  {
+        //登陆账号，请不要使用new，而是使用create方法创建
+        KcAccount account = KcAccount.create("2014564546", "我是密码");
+
+        //进行登陆并判断是否登陆成功
+        if(account.login()){
+            //获取个人学籍信息
+            System.out.println(account.getUserDetail());
+
+            //获取学期成绩列表（包含学期成绩和）
+            ScoreList scoreList = account.getScore();
+            //将及格成绩分学期打印
+            scoreList.forEach((k, v) -> System.out.println("学期："+k+" -> 成绩列表："+v));
+            //不及格成绩单独存在另一个List中
+            System.out.println("不及格成绩："+scoreList.getFailedScore());
+        }else {
+            System.out.println("登陆失败！");
+        }
+    }
+}
+```
