@@ -106,6 +106,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
      */
     @Override
     public boolean logout() {
+        if(session == null) return false;
         JSONObject object = new JSONObject();
         object.put("loginType", "platformLogin");
         return NetManager.logout(session, object, response -> response.getStatusCode() == 200);
@@ -133,6 +134,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
      */
     @Override
     public ScoreList getScore() {
+        if(session == null) return null;
         return new ScoreList() {
             private final Map<String, List<Score>> listMap = NetManager.scoreProgram(session, response -> {
                 Map<String, Score> scoreList = new HashMap<>();
@@ -186,6 +188,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
 
     @Override
     public ClassTable getClassTable(int term) {
+        if(session == null) return null;
         if(term < 1 || term > 8) return null;
         int add = (term-1)/2;
         String termStr = (grade+add)+"-"+(grade+add+1)+"-"+(term%2 == 1 ? "1":"2")+"-1";
