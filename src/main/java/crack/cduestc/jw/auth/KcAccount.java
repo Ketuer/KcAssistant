@@ -109,38 +109,44 @@ public class KcAccount implements AuthFunction, ScoreFunction {
     @Override
     public ScoreList getScore() {
         return new ScoreList() {
-            private final Map<String, List<Score>> listMap = NetManager.scorePass(session, response -> {
-                Map<String, List<Score>> listMap = new HashMap<>();
-                Elements titles = response.getDocument().getElementsByAttributeValue("id", "tblHead");
-                Elements scores = response.getDocument().getElementsByClass("titleTop2");
-                for (int i = 0; i < scores.size(); i++) {
-                    String term = titles.get(i).getElementsByTag("b").first().text();
-                    Elements trs = scores.get(i).getElementsByClass("displayTag").first().getElementsByTag("tr");
-                    List<Score> scoreList = new ArrayList<>();
-                    for (int j = 1; j < trs.size(); j++) {
-                        Elements tds = trs.get(j).getElementsByTag("td");
-                        scoreList.add(new Score(tds.get(0).text(), tds.get(2).text(), tds.get(4).text(), tds.get(6).text(),tds.get(5).text(), ""));
+            private final Map<String, List<Score>> listMap = NetManager.scoreProgram(session, response -> {
+                Map<String, Score> scoreList = new HashMap<>();
+                Document document = response.getDocument();
+                Elements elements = document.getElementById("user").getElementsByTag("tr");
+                for (int i = 1; i < elements.size(); i++) {
+                    Elements tds = elements.get(i).getElementsByTag("td");
+                    scoreList.put(tds.get(0).text(), new Score(tds.get(0).text(), tds.get(2).text(), tds.get(4).text(),
+                            tds.get(6).text(),tds.get(5).text(), tds.get(7).text()));
+                }
+                return NetManager.scorePlan(session, responsePlan -> {
+                    Map<String, List<Score>> map = new LinkedHashMap<>();
+                    Elements titles = responsePlan.getDocument().getElementsByClass("title");
+                    Elements tables = responsePlan.getDocument().getElementsByClass("displayTag");
+                    for (int i = 3; i < titles.size(); i+=3) {
+                        map.put(titles.get(i).getElementsByTag("b").first().text(), new ArrayList<>());
                     }
-                    listMap.put(term, scoreList);
-                }
-                return listMap;
-            });
-            private final List<Score> listFailed = NetManager.scoreFailed(session, response -> {
-                List<Score> scoreList = new ArrayList<>();
-                Elements trs = response.getDocument().getElementById("user").getElementsByTag("tr");
-                for (int i = 1; i < trs.size(); i++) {
-                    Elements tds = trs.get(i).getElementsByTag("td");
-                    scoreList.add(new Score(tds.get(0).text(), tds.get(2).text(), tds.get(4).text(), tds.get(6).text(),tds.get(5).text(), tds.get(8).text()));
-                }
-                return scoreList;
+                    int i = 0;
+                    for (String term : map.keySet()){
+                        Elements scoreIn = tables.get(i*3+2).getElementsByTag("tr");
+                        for (int j = 1; j < scoreIn.size() - 1; j++) {
+                            Elements tds = scoreIn.get(j).getElementsByTag("td");
+                            String id = tds.get(0).text();
+                            map.get(term).add(scoreList.get(id));
+                        }
+                        Elements scoreOut = tables.get(i*3+3).getElementsByTag("tr");
+                        for (int j = 1; j < scoreOut.size(); j++) {
+                            Elements tds = scoreOut.get(j).getElementsByTag("td");
+                            String id = tds.get(0).text();
+                            map.get(term).add(scoreList.get(id));
+                        }
+                        i++;
+                    }
+                    return map;
+                });
             });
 
             public List<Score> getScore(String term){
                 return listMap.getOrDefault(term, new ArrayList<>());
-            }
-
-            public List<Score> getFailedScore(){
-                return listFailed;
             }
 
             public Set<String> getTerms(){
@@ -151,24 +157,6 @@ public class KcAccount implements AuthFunction, ScoreFunction {
                 listMap.forEach(consumer);
             }
         };
-    }
-
-    /**
-     * 获取方案成绩（不会进行学期分类）
-     * @return 方案成绩
-     */
-    @Override
-    public List<Score> getScoreProgram() {
-        return NetManager.scoreProgram(session, response -> {
-            List<Score> scoreList = new ArrayList<>();
-            Document document = response.getDocument();
-            Elements elements = document.getElementById("user").getElementsByTag("tr");
-            for (int i = 1; i < elements.size(); i++) {
-                Elements tds = elements.get(i).getElementsByTag("td");
-                scoreList.add(new Score(tds.get(0).text(), tds.get(2).text(), tds.get(4).text(), tds.get(6).text(),tds.get(5).text(), tds.get(7).text()));
-            }
-            return scoreList;
-        });
     }
 
     /**

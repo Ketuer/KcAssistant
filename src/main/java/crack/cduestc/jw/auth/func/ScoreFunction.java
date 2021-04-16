@@ -7,5 +7,4 @@ import java.util.List;
 
 public interface ScoreFunction {
     ScoreList getScore();
-    List<Score> getScoreProgram();
 }

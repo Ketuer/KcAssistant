@@ -9,11 +9,14 @@
 * 如果喜欢本项目，请点个star⭐️
 
 ## 版本历史 ⚒
+* ### 1.0.5 - Release
+    * 保留学期成绩获取，移除方案成绩获取
+    * 现在获取学期成绩可以直接获取必修和选修、通过和挂科的成绩了
+    * 成绩获取现在采用映射机制，没有评教依然可以查询学期成绩
 * ### 1.0 - Release
     * 基本框架搭建完成
     * 支持账号的登陆、退出操作（破教务甚至连重置密码都有问题）
     * 支持查询学期成绩、方案成绩
-* ### 新版本正在开发中...
 
 ## Java开发者
 开发者wiki待完善。
@@ -53,12 +56,8 @@ public class Main {
             //获取个人学籍信息
             System.out.println(account.getUserDetail());
 
-            //获取学期成绩列表（包含学期成绩和）
-            ScoreList scoreList = account.getScore();
-            //将及格成绩分学期打印
-            scoreList.forEach((k, v) -> System.out.println("学期："+k+" -> 成绩列表："+v));
-            //不及格成绩单独存在另一个List中
-            System.out.println("不及格成绩："+scoreList.getFailedScore());
+            //获取学期成绩列表（包含选项和必修成绩、也包括挂科和未挂科）
+            account.getScore().forEach((k ,v) -> System.out.println(k+" -> ("+v.size()+")"+v));
         }else {
             System.out.println("登陆失败！");
         }

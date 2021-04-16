@@ -52,19 +52,15 @@ public class NetManager {
         return null;
     }
 
-    public static <T> T scorePass(String session, ResponseParser<T> parser){
-        return parser.parse(createGetWithSession(session, "/gradeLnAllAction.do?type=ln&oper=qbinfo"));
-    }
-
-    public static <T> T scoreFailed(String session, ResponseParser<T> parser){
-        return parser.parse(createGetWithSession(session, "/gradeLnAllAction.do?type=ln&oper=bjg"));
+    public static <T> T scorePlan(String session, ResponseParser<T> parser){
+        return parser.parse(createGetWithSession(session, "/gradeLnAllAction.do?type=ln&oper=lnFajhKcCjInfo"));
     }
 
     public static <T> T scoreProgram(String session, ResponseParser<T> parser){
         WebResponse response = createGetWithSession(session, "/gradeLnAllAction.do?type=ln&oper=fa");
         if(response.getStatusCode() != 200) return null;
         String url = response.getDocument().getElementsByAttributeValue("name", "lnfaIfra").first().attr("src");
-        return parser.parse(createGetWithSession(session, ip+"/"+url));
+        return parser.parse(createGetWithSession(session, "/"+url));
     }
 
     private static WebResponse createGetWithSession(String session, String url){
