@@ -117,6 +117,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
      */
     @Override
     public boolean resetPassword(String newPassword) {
+        if(session == null) return false;
         JSONObject object = new JSONObject();
         object.put("yhlbdm", "01");
         object.put("zjh", id);
@@ -281,5 +282,21 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
      */
     public String getLevel() {
         return level;
+    }
+
+    /**
+     * 入学年级
+     * @return 年级
+     */
+    public int getGrade() {
+        return grade;
+    }
+
+    /**
+     * 获取班级
+     * @return 班级
+     */
+    public String getClazz() {
+        return clazz;
     }
 }
