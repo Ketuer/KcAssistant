@@ -2,7 +2,10 @@ package crack.cduestc.jw.auth;
 
 import com.alibaba.fastjson.JSONObject;
 import crack.cduestc.jw.auth.func.AuthFunction;
+import crack.cduestc.jw.auth.func.ClazzFunction;
 import crack.cduestc.jw.auth.func.ScoreFunction;
+import crack.cduestc.jw.clazz.ClassTable;
+import crack.cduestc.jw.clazz.Clazz;
 import crack.cduestc.jw.net.NetManager;
 import crack.cduestc.jw.net.resp.WebResponse;
 import crack.cduestc.jw.score.Score;
@@ -22,7 +25,7 @@ import java.util.function.BiConsumer;
  * @author Ketuer
  * @since 1.0
  */
-public class KcAccount implements AuthFunction, ScoreFunction {
+public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
     /* 账号 */
     private final String id;
     /* 密码 */
@@ -33,6 +36,10 @@ public class KcAccount implements AuthFunction, ScoreFunction {
     private JSONObject userDetail;
     /* 班级 */
     private String clazz;
+    /* 分流方向 */
+    private String level;
+    /* 年级 */
+    private int grade;
 
     private KcAccount(String id, String password){
         this.id = id;
@@ -81,6 +88,8 @@ public class KcAccount implements AuthFunction, ScoreFunction {
                     String key = data.get(i++).text().replace(":", "");
                     String value = data.get(i++).text();
                     if(key.contains("班级")) clazz = value;
+                    if(key.contains("分流方向")) level = value;
+                    if(key.contains("年级")) grade = Integer.parseInt(value.replace("级", ""));
                     detail.put(key, value);
                 }
                 return detail;
@@ -100,6 +109,21 @@ public class KcAccount implements AuthFunction, ScoreFunction {
         JSONObject object = new JSONObject();
         object.put("loginType", "platformLogin");
         return NetManager.logout(session, object, response -> response.getStatusCode() == 200);
+    }
+
+    /**
+     * 重置账户密码
+     * @return 是否重置成功
+     */
+    @Override
+    public boolean resetPassword(String newPassword) {
+        JSONObject object = new JSONObject();
+        object.put("yhlbdm", "01");
+        object.put("zjh", id);
+        object.put("oldPass", password);
+        object.put("newPass1", newPassword);
+        object.put("newPass2", newPassword);
+        return NetManager.changePassword(session, object, response -> response.getStatusCode() == 200);
     }
 
     /**
@@ -159,6 +183,58 @@ public class KcAccount implements AuthFunction, ScoreFunction {
         };
     }
 
+    @Override
+    public ClassTable getClassTable(int term) {
+        if(term < 1 || term > 8) return null;
+        int add = (term-1)/2;
+        String termStr = (grade+add)+"-"+(grade+add+1)+"-"+(term%2 == 1 ? "1":"2")+"-1";
+        return NetManager.classes(session, clazz, termStr, response -> {
+            Map<Integer, Map<Integer, List<Clazz>>> map = new HashMap<>();
+            Elements table = response.getDocument().getElementById("user").getElementsByTag("tr");
+            int line = 1;
+            for (int i = 2; i < table.size(); i++) {
+                if(i == 6 || i == 11) continue;
+                Elements e = table.get(i).getElementsByAttributeValue("valign", "top");
+                for (int j = 0; j < e.size(); j++) {
+                    if(!map.containsKey(j+1)) map.put(j+1, new HashMap<>());
+                    String[] classes = e.get(j).text().split("周上\\) ");
+                    if(!map.get(j+1).containsKey(line)) map.get(j+1).put(line, new ArrayList<>());
+
+                    for(String info : classes){
+                        if(info.isEmpty()) continue;
+                        if(!info.contains("周上)")) info += "周上)";
+
+                        int a = info.indexOf('_')+3, b = info.length() - 1;
+                        String name = info.substring(0, a);
+                        String[] data = info.substring(a+1, b).split(",");
+                        if(data[3].contains("-")){
+                            String week = data[3].replace("周上", "");
+                            map.get(j+1).get(line).add(new Clazz(data[0], data[1], data[2], name, week));
+                        }else {
+                            String[] week = Arrays.copyOfRange(data, 3, data.length);
+                            map.get(j+1).get(line).add(new Clazz(data[0], data[1], data[2], name, week));
+                        }
+                    }
+                }
+                line++;
+            }
+            return new ClassTable() {
+                final Map<Integer, Map<Integer, List<Clazz>>> mapTable = map;
+
+                @Override
+                public Map<Integer, List<Clazz>> getClassInOneDay(int day) {
+                    if(day < 1 || day > 7) return null;
+                    return mapTable.get(day);
+                }
+
+                @Override
+                public void forEach(BiConsumer<Integer, Map<Integer, List<Clazz>>> consumer) {
+                    mapTable.forEach(consumer);
+                }
+            };
+        });
+    }
+
     /**
      * 获取学号
      * @return 学号
@@ -184,10 +260,26 @@ public class KcAccount implements AuthFunction, ScoreFunction {
     }
 
     /**
+     * 获取本次登陆后的会话session
+     * @return session
+     */
+    public String getSession() {
+        return session;
+    }
+
+    /**
      * 获取用的详细信息(学籍信息)头像照片
      * @return 图片输入流
      */
     public BufferedInputStream getUserDetailHeadImg(){
         return NetManager.userDetailHeadImg(session);
+    }
+
+    /**
+     * 获取分流方向（本科、专科）
+     * @return 分流方向
+     */
+    public String getLevel() {
+        return level;
     }
 }

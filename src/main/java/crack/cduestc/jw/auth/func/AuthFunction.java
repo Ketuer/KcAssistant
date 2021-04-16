@@ -18,4 +18,10 @@ public interface AuthFunction {
      * @return 是否登出成功
      */
     boolean logout();
+
+    /**
+     * 重置密码
+     * @return 是否重置成功
+     */
+    boolean resetPassword(String newPassword);
 }
