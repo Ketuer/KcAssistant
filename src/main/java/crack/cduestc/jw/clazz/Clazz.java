@@ -1,6 +1,7 @@
 package crack.cduestc.jw.clazz;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class Clazz {
     /* 上课周 */
@@ -104,6 +105,21 @@ public class Clazz {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Clazz clazz = (Clazz) o;
+        return Arrays.equals(week, clazz.week) && Objects.equals(teacher, clazz.teacher) && Objects.equals(name, clazz.name);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(place, subPlace, teacher, name);
+        result = 31 * result + Arrays.hashCode(week);
+        return result;
     }
 
     @Override

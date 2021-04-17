@@ -10,6 +10,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.List;
 
 /**
  * 基于Jsoup实现的网络接口管理类，包含全部网络接口操作
@@ -78,6 +79,14 @@ public class NetManager {
         return parser.parse(createGetWithSession(session, "/bjKbInfoAction.do?oper=bjkb_xx&xzxjxjhh="+term+"&xbjh="+clazz+"&xbm="+clazz));
     }
 
+    public static <T> T classesElective(String session, ResponseParser<T> parser){
+        return parser.parse(createGetWithSession(session, "/xkAction.do?actionType=6"));
+    }
+
+    public static List<String> classesElectiveList(String session, ResponseParser<List<String>> parser){
+        return parser.parse(createGetWithSession(session, "/gradeLnAllAction.do?type=ln&oper=lnfaqk&flag=zx"));
+    }
+
     private static WebResponse createGetWithSession(String session, String url){
         Connection con = Jsoup.connect(ip+url);
         con.header("Cookie", "JSESSIONID="+session);
@@ -104,7 +113,7 @@ public class NetManager {
 
     private static WebResponse connect(Connection con, Connection.Method method){
         try {
-            con.timeout(5000);
+            con.timeout(30000);
             Connection.Response resp=con.method(method).execute();
             return new WebResponse(resp.statusCode(), resp.parse(), resp.cookies());
         } catch (IOException e) {

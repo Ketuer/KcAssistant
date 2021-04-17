@@ -7,7 +7,6 @@ import crack.cduestc.jw.auth.func.ScoreFunction;
 import crack.cduestc.jw.clazz.ClassTable;
 import crack.cduestc.jw.clazz.Clazz;
 import crack.cduestc.jw.net.NetManager;
-import crack.cduestc.jw.net.resp.WebResponse;
 import crack.cduestc.jw.score.Score;
 import crack.cduestc.jw.score.ScoreList;
 import org.jsoup.nodes.Document;
@@ -15,7 +14,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedInputStream;
-import java.io.InputStream;
 import java.util.*;
 import java.util.function.BiConsumer;
 
@@ -186,57 +184,169 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         };
     }
 
-    @Override
-    public ClassTable getClassTable(int term) {
-        if(session == null) return null;
-        if(term < 1 || term > 8) return null;
+    private Map<Integer, Map<Integer, List<Clazz>>> getTableMap(int term){
         int add = (term-1)/2;
         String termStr = (grade+add)+"-"+(grade+add+1)+"-"+(term%2 == 1 ? "1":"2")+"-1";
-        return NetManager.classes(session, clazz, termStr, response -> {
+        return NetManager.classes(session, clazz, termStr, responseMain -> {
+            List<String> elective = NetManager.classesElectiveList(session, response -> {
+                List<String> list = new ArrayList<>();
+                String element = response.getDocument().getElementsByTag("script").html();
+                int start;
+                if (element.contains("专业选修类")) {
+                    start = element.indexOf("专业选修类");
+                } else {
+                    start = element.indexOf("开放选修类");
+                }
+                element = element.substring(start);
+                int end = element.indexOf("最低修读学分", 20);
+                if (end != -1) element = element.substring(0, end);
+                int pos = 0;
+                do {
+                    int head = element.indexOf("'[", pos);
+                    int tail = element.indexOf("'", head + 2);
+                    if (head == -1 || tail == -1) break;
+                    String content = element.substring(head + 1, tail);
+                    int left = content.indexOf("]"), right = content.indexOf("[", left);
+                    if (right == -1) right = content.indexOf("(");
+                    if (right == -1) right = content.length();
+                    list.add(content.substring(left + 1, right));
+                    pos = tail;
+                } while (true);
+                return list;
+            });
+            Elements table = responseMain.getDocument().getElementById("user").getElementsByTag("tr");
             Map<Integer, Map<Integer, List<Clazz>>> map = new HashMap<>();
-            Elements table = response.getDocument().getElementById("user").getElementsByTag("tr");
             int line = 1;
             for (int i = 2; i < table.size(); i++) {
-                if(i == 6 || i == 11) continue;
+                if (i == 6 || i == 11) continue;
                 Elements e = table.get(i).getElementsByAttributeValue("valign", "top");
                 for (int j = 0; j < e.size(); j++) {
-                    if(!map.containsKey(j+1)) map.put(j+1, new HashMap<>());
+                    if (!map.containsKey(j + 1)) map.put(j + 1, new HashMap<>());
                     String[] classes = e.get(j).text().split("周上\\) ");
-                    if(!map.get(j+1).containsKey(line)) map.get(j+1).put(line, new ArrayList<>());
-
-                    for(String info : classes){
-                        if(info.isEmpty()) continue;
-                        if(!info.contains("周上)")) info += "周上)";
-
-                        int a = info.indexOf('_')+3, b = info.length() - 1;
+                    if (!map.get(j + 1).containsKey(line)) map.get(j + 1).put(line, new ArrayList<>());
+                    for (String info : classes) {
+                        if (info.isEmpty()) continue;
+                        if (!info.contains("周上)")) info += "周上)";
+                        int a = info.indexOf('_') + 3, b = info.length() - 1;
                         String name = info.substring(0, a);
-                        String[] data = info.substring(a+1, b).split(",");
-                        if(data[3].contains("-")){
+                        if (elective != null) {
+                            boolean flag = false;
+                            for (String match : elective) {
+                                if (name.contains(match)) {
+                                    flag = true;
+                                    break;
+                                }
+                            }
+                            if (flag) continue;
+                        }
+
+                        String[] data = info.substring(a + 1, b).split(",");
+                        if (data[3].contains("-")) {
                             String week = data[3].replace("周上", "");
-                            map.get(j+1).get(line).add(new Clazz(data[0], data[1], data[2], name, week));
-                        }else {
+                            map.get(j + 1).get(line).add(new Clazz(data[0], data[1], data[2], name, week));
+                        } else {
                             String[] week = Arrays.copyOfRange(data, 3, data.length);
-                            map.get(j+1).get(line).add(new Clazz(data[0], data[1], data[2], name, week));
+                            map.get(j + 1).get(line).add(new Clazz(data[0], data[1], data[2], name, week));
                         }
                     }
                 }
                 line++;
             }
-            return new ClassTable() {
-                final Map<Integer, Map<Integer, List<Clazz>>> mapTable = map;
-
-                @Override
-                public Map<Integer, List<Clazz>> getClassInOneDay(int day) {
-                    if(day < 1 || day > 7) return null;
-                    return mapTable.get(day);
-                }
-
-                @Override
-                public void forEach(BiConsumer<Integer, Map<Integer, List<Clazz>>> consumer) {
-                    mapTable.forEach(consumer);
-                }
-            };
+            return map;
         });
+    }
+
+    /**
+     * 仅获取必修的课程表
+     * @param term  学期（本科为 1-8，专科为 1-6）
+     * @return 课程表
+     */
+    @Override
+    public ClassTable getMainClassTable(int term) {
+        if(session == null) return null;
+        if(term < 1 || term > 8) return null;
+        return new ClassTable() {
+            final Map<Integer, Map<Integer, List<Clazz>>> mapTable = getTableMap(term);
+
+            @Override
+            public Map<Integer, List<Clazz>> getClassInOneDay(int day) {
+                if(day < 1 || day > 7) return null;
+                return mapTable.get(day);
+            }
+
+            @Override
+            public void forEach(BiConsumer<Integer, Map<Integer, List<Clazz>>> consumer) {
+                mapTable.forEach(consumer);
+            }
+        };
+    }
+
+    /**
+     * 获取课程表，包括必修课和选修课（选修课只有已选的才会显示）
+     * @param term 学期（本科为 1-8，专科为 1-6）
+     * @return 课程表
+     */
+    @Override
+    public ClassTable getClassTable(int term) {
+        if(session == null) return null;
+        if(term < 1 || term > 8) return null;
+        Map<Integer, Map<Integer, List<Clazz>>> map = getTableMap(term);
+        NetManager.classesElective(session, response -> {
+            Elements main = response.getDocument().getElementsByAttributeValue("id", "user");
+            Elements clazzDetail = main.get(1).getElementsByTag("tr");
+            Clazz last = null;
+            for (int i = 1; i < clazzDetail.size(); i++) {
+                Elements tds = clazzDetail.get(i).getElementsByTag("td");
+                String name = tds.get(2).text()+"_"+tds.get(3).text();
+                int day, l, count;
+                Clazz clazz;
+                if(tds.size() < 8){
+                    day = Integer.parseInt(tds.get(1).text());
+                    l = (convert(tds.get(2).text()) - 1) * 2;
+                    count = Integer.parseInt(tds.get(3).text());
+                    clazz = new Clazz(tds.get(4).text(), tds.get(6).text(), last.getTeacher(),
+                            last.getName(), tds.get(0).text().replace("周上", ""));
+                }else {
+                    day = Integer.parseInt(tds.get(12).text());
+                    l = (convert(tds.get(13).text()) - 1) * 2;
+                    count = Integer.parseInt(tds.get(14).text());
+                    clazz = new Clazz(tds.get(15).text(), tds.get(16).text(),
+                            tds.get(7).text().replace("*", ""), name,
+                            tds.get(11).text().replace("周上", ""));
+                }
+                for (int j = 1; j <= count; j++) {
+                    List<Clazz> list = map.get(day).get(l+j);
+                    if(!list.contains(clazz)) list.add(clazz);
+                }
+                last = clazz;
+            }
+            return null;
+        });
+        return new ClassTable() {
+            final Map<Integer, Map<Integer, List<Clazz>>> mapTable = map;
+
+            @Override
+            public Map<Integer, List<Clazz>> getClassInOneDay(int day) {
+                if(day < 1 || day > 7) return null;
+                return mapTable.get(day);
+            }
+
+            @Override
+            public void forEach(BiConsumer<Integer, Map<Integer, List<Clazz>>> consumer) {
+                mapTable.forEach(consumer);
+            }
+        };
+    }
+
+    private int convert(String index){
+        switch (index){
+            default:
+            case "一": return 1;
+            case "二": return 2;
+            case "三": return 3;
+            case "四": return 4;
+            case "五": return 5;
+        }
     }
 
     /**
