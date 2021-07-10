@@ -20,14 +20,14 @@ import java.util.List;
  */
 public class NetManager {
 
-    private static String ip = "http://newjw.cduestc.cn:1234";
+    private static String ip = "http://newjw.cduestc.cn:4567";
 
     /**
      * 是否切换为内网访问
      * @param toggle 是否切换
      */
     public static void switchInnerIp(boolean toggle){
-        ip = toggle ? "http://newjw.cduestc.cn" : "http://newjw.cduestc.cn:1234";
+        ip = toggle ? "http://newjw.cduestc.cn" : "http://newjw.cduestc.cn:4567";
     }
 
     public static <T> T login(JSONObject data, ResponseParser<T> parser){

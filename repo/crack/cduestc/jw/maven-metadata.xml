@@ -3,13 +3,14 @@
   <groupId>crack.cduestc</groupId>
   <artifactId>jw</artifactId>
   <versioning>
-    <release>1.1.5-Release</release>
+    <release>1.1.6-Release</release>
     <versions>
       <version>1.0-Release</version>
       <version>1.0.5-Release</version>
       <version>1.1-Release</version>
       <version>1.1.5-Release</version>
+      <version>1.1.6-Release</version>
     </versions>
-    <lastUpdated>20210417084943</lastUpdated>
+    <lastUpdated>20210710140807</lastUpdated>
   </versioning>
 </metadata>
