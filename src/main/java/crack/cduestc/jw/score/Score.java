@@ -13,7 +13,7 @@ public class Score {
     /* 学分 */
     double value;
     /* 成绩 */
-    double score;
+    String score;
     /* 属性 */
     String type;
     /* 原因 */
@@ -23,7 +23,7 @@ public class Score {
         this.id = id;
         this.name = name;
         this.value = Double.parseDouble(value);
-        this.score = Double.parseDouble(score);
+        this.score = score;
         this.type = type;
         this.reason = reason;
     }
@@ -40,7 +40,7 @@ public class Score {
         return value;
     }
 
-    public double getScore() {
+    public String getScore() {
         return score;
     }
 
