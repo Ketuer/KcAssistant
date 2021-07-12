@@ -56,7 +56,7 @@
   <dependency>
     <groupId>crack.cduestc</groupId>
     <artifactId>jw</artifactId>
-    <version>1.1.5-Release</version>
+    <version>1.1.6-Release</version>
   </dependency>
 </dependencies>
 ```
