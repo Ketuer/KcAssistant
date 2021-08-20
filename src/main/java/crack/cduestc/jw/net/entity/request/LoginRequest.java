@@ -1,14 +1,14 @@
 package crack.cduestc.jw.net.entity.request;
 
-import crack.cduestc.jw.net.anno.Param;
+import crack.cduestc.jw.net.anno.RequestParam;
 import crack.cduestc.jw.net.enums.Language;
 
 public class LoginRequest extends Request{
-    @Param("username")
+    @RequestParam("username")
     private String name;
-    @Param("password")
+    @RequestParam("password")
     private String password;
-    @Param("session_locale")
+    @RequestParam("session_locale")
     private Language lang;
 
     public LoginRequest(String name, String password, Language lang) {

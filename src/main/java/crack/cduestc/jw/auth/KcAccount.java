@@ -6,13 +6,15 @@ import crack.cduestc.jw.auth.func.ScoreFunction;
 import crack.cduestc.jw.clazz.ClassTable;
 import crack.cduestc.jw.exception.AuthorizationException;
 import crack.cduestc.jw.exception.NetworkException;
+import crack.cduestc.jw.exception.PasswordRegexException;
 import crack.cduestc.jw.net.NetManager;
 import crack.cduestc.jw.net.entity.WebCookie;
-import crack.cduestc.jw.net.enums.Language;
 import crack.cduestc.jw.net.entity.request.LoginRequest;
 import crack.cduestc.jw.net.entity.response.ErrorResponse;
 import crack.cduestc.jw.net.entity.response.LoginResponse;
 import crack.cduestc.jw.net.entity.response.Response;
+import crack.cduestc.jw.net.entity.response.UserInfoResponse;
+import crack.cduestc.jw.net.enums.Language;
 import crack.cduestc.jw.score.ScoreList;
 
 /**
@@ -34,6 +36,8 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
     private String role;
     /* 用户名称 */
     private String name;
+    /* 个人信息 */
+    private UserInfoResponse info;
 
 
     private KcAccount(String id, String password, Language language){
@@ -74,6 +78,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
             this.cookie = loginResponse.getCookie();
             this.name = loginResponse.getUserName();
             this.role = loginResponse.getRole();
+            this.refreshInfo();
         }else {
             ErrorResponse errorResponse = (ErrorResponse) response;
             throw new AuthorizationException(errorResponse.getReason());
@@ -92,8 +97,33 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         Response response = NetManager.resetPassword(cookie, newPassword, password);
         if(response.getCode() != 200){
             ErrorResponse error = (ErrorResponse) response;
-            throw new AuthorizationException(error.getReason());
+            if(response.getCode() == 401){
+                throw new AuthorizationException(error.getReason());
+            }else {
+                throw new PasswordRegexException(error.getReason());
+            }
         }
+    }
+
+    /**
+     * 更新个人信息
+     */
+    public void refreshInfo(){
+        Response response = NetManager.info(cookie);
+        if(response.getCode() == 401){
+            ErrorResponse err = (ErrorResponse) response;
+            throw new AuthorizationException(err.getReason());
+        }else if(response.getCode() == 200){
+            this.info = (UserInfoResponse) response;
+        }else {
+            ErrorResponse err = (ErrorResponse) response;
+            throw new NetworkException(err.getReason());
+        }
+    }
+
+    @Override
+    public ScoreList getScore() {
+        return null;
     }
 
     @Override
@@ -103,11 +133,6 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
 
     @Override
     public ClassTable getMainClassTable(int term) {
-        return null;
-    }
-
-    @Override
-    public ScoreList getScore() {
         return null;
     }
 
@@ -129,5 +154,9 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
 
     public String getName() {
         return name;
+    }
+
+    public UserInfoResponse getInfo() {
+        return info;
     }
 }

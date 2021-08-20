@@ -1,21 +1,21 @@
 package crack.cduestc.jw.net.entity.request;
 
-import crack.cduestc.jw.net.anno.Param;
+import crack.cduestc.jw.net.anno.RequestParam;
 
 public class PasswordRequest extends Request{
-    @Param("oldPassword")
+    @RequestParam("oldPassword")
     private final String oldPassword;
 
-    @Param("password")
+    @RequestParam("password")
     private final String password;
 
-    @Param("repeatedPassword")
+    @RequestParam("repeatedPassword")
     private final String repeatedPassword;
 
-    @Param("mail")
+    @RequestParam("mail")
     private final String mail;
 
-    @Param("user.id")
+    @RequestParam("user.id")
     private final String userId;
 
     public PasswordRequest(String oldPassword, String password, String repeatedPassword, String mail, String userId) {

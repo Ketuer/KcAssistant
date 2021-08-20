@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import crack.cduestc.jw.net.entity.WebCookie;
 import crack.cduestc.jw.net.entity.request.PasswordRequest;
 import crack.cduestc.jw.net.entity.response.SuccessResponse;
+import crack.cduestc.jw.net.parser.InfoParser;
 import crack.cduestc.jw.net.parser.LoginParser;
 import crack.cduestc.jw.net.entity.request.LoginRequest;
 import crack.cduestc.jw.net.entity.request.Request;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class NetManager {
 
     private static final LoginParser loginParser = new LoginParser();
+    private static final InfoParser infoParser = new InfoParser();
 
     private static final String ip = "http://www.cduestc.cn/eams";
 
@@ -94,6 +96,18 @@ public class NetManager {
         } else {
             return new ErrorResponse("网络错误！", 404);
         }
+    }
+
+    public static Response info(WebCookie cookie){
+        WebResponse response = request("/stdInfoApply!stdInfoCheck.action", Method.GET, cookie, null);
+        if(response.getStatusCode() != 200){
+            return new ErrorResponse(response.getReason(), response.getStatusCode());
+        }
+        return infoParser.parse(response.getDocument());
+    }
+
+    public static Response score(WebCookie cookie, String semesterId){
+        return null;
     }
 
     private static WebResponse request(String api, Method method, WebCookie cookie, Request data){
