@@ -1,5 +1,7 @@
 package crack.cduestc.jw.net.resp;
 
+import crack.cduestc.jw.net.entity.WebResponse;
+
 /**
  * Html数据解析器，由于服务器返回的是Html数据，
  * 每一个接口都有一个自定义的Html解析器，将数据

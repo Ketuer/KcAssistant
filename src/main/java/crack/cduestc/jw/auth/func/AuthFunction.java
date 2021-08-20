@@ -9,19 +9,18 @@ package crack.cduestc.jw.auth.func;
 public interface AuthFunction {
     /**
      * 登陆
-     * @return 是否登陆成功
      */
-    boolean login();
+    void login();
 
     /**
      * 登出
      * @return 是否登出成功
      */
-    boolean logout();
+    void logout();
 
     /**
      * 重置密码
      * @return 是否重置成功
      */
-    boolean resetPassword(String newPassword);
+    void resetPassword(String newPassword);
 }
