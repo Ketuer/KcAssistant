@@ -1,4 +1,5 @@
 # KcAssistant 教务系统助手
+* 由于教务系统升级，本系统即将升级为2.0版本
 你可以将此项目和 [BaiAssistant 百叶计划助手](https://github.com/Ketuer/BaiAssistant) 配合使用。</br>
 本项目与BaiAssistant相同，同样是通过接口直接操作教务账号，包括成绩查询、学籍信息查询、课表查询、选修课报名等操作。</br>
 
