@@ -34,13 +34,33 @@ public abstract class JSONResponse extends Response{
         return object;
     }
 
+    public Object get(String name){
+        try {
+            return fieldMap.get(name).get(this);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void setField(String name, String value){
         Field field = fieldMap.get(name);
         if(field != null){
             try {
                 switch (field.getType().getName()){
                     case "int":
-                        field.set(this, Integer.parseInt(value));
+                        if(value.isEmpty() || value.contains("-")){
+                            field.set(this, 0);
+                        }else {
+                            field.set(this, Integer.parseInt(value));
+                        }
+                        break;
+                    case "double":
+                        if(value.isEmpty() || value.contains("-")) {
+                            field.set(this, 0.0);
+                        }else {
+                            field.set(this, Double.parseDouble(value));
+                        }
                         break;
                     case "java.util.Date":
                         field.set(this, format.parse(value));
@@ -52,5 +72,10 @@ public abstract class JSONResponse extends Response{
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return asJSON().toString();
     }
 }

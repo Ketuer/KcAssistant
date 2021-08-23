@@ -1,32 +1,34 @@
 package crack.cduestc.jw.net;
 
-import com.alibaba.fastjson.JSONObject;
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.WebRequest;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.util.Cookie;
 import crack.cduestc.jw.net.entity.WebCookie;
-import crack.cduestc.jw.net.entity.request.PasswordRequest;
-import crack.cduestc.jw.net.entity.response.SuccessResponse;
-import crack.cduestc.jw.net.parser.InfoParser;
-import crack.cduestc.jw.net.parser.LoginParser;
+import crack.cduestc.jw.net.entity.WebResponse;
+import crack.cduestc.jw.net.entity.request.ClassesRequest;
 import crack.cduestc.jw.net.entity.request.LoginRequest;
+import crack.cduestc.jw.net.entity.request.PasswordRequest;
 import crack.cduestc.jw.net.entity.request.Request;
-import crack.cduestc.jw.net.enums.Method;
 import crack.cduestc.jw.net.entity.response.ErrorResponse;
 import crack.cduestc.jw.net.entity.response.Response;
-import crack.cduestc.jw.net.resp.ResponseParser;
-import crack.cduestc.jw.net.entity.WebResponse;
+import crack.cduestc.jw.net.entity.response.SuccessResponse;
+import crack.cduestc.jw.net.enums.Method;
+import crack.cduestc.jw.net.parser.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 基于Jsoup实现的网络接口管理类，包含全部网络接口操作
@@ -38,6 +40,15 @@ public class NetManager {
 
     private static final LoginParser loginParser = new LoginParser();
     private static final InfoParser infoParser = new InfoParser();
+    private static final ScoreParser scoreParser = new ScoreParser();
+    private static final ClassParser classParser = new ClassParser();
+    private static final OldClassParser oldClassParser = new OldClassParser();
+
+    /* 资源消耗巨大，某些需要进行动态js渲染的页面才会用到 */
+    private static final WebClient client = new WebClient(BrowserVersion.CHROME);
+    static {
+        Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
+    }
 
     private static final String ip = "http://www.cduestc.cn/eams";
 
@@ -106,8 +117,33 @@ public class NetManager {
         return infoParser.parse(response.getDocument());
     }
 
-    public static Response score(WebCookie cookie, String semesterId){
-        return null;
+    public static Response score(WebCookie cookie, int semesterId, int grade){
+        WebResponse response = request("/teach/grade/course/person!historyCourseGrade.action?projectType=MAJOR",
+                Method.GET, cookie, null);
+        if(response.getStatusCode() != 200){
+            return new ErrorResponse(response.getReason(), response.getStatusCode());
+        }
+        return scoreParser.parse(response.getDocument());
+    }
+
+    public static Response classes(WebCookie cookie, int term, int grade){
+        int semester = (2035 - grade) * 2 + term;
+        ClassesRequest request = new ClassesRequest(1, "class", 1, semester, "1462", "");
+        HtmlPage page = requestAsClient("/courseTableForStd!courseTable.action", Method.POST, cookie, request);
+        if(page == null) return new ErrorResponse("网络错误！", 404);
+        return semester > 36 ? classParser.parse(page) : oldClassParser.parse(page);
+    }
+
+    private synchronized static HtmlPage requestAsClient(String api, Method method, WebCookie cookie, Request data){
+        try {
+            client.getCookieManager().clearCookies();
+            cookie.forEachAddCookie((k, v) -> client.getCookieManager().addCookie(new Cookie("www.cduestc.cn", k, v)));
+            WebRequest request = new WebRequest(new URL(ip+api), method.getHttpMethod());
+            if(method != Method.GET) request.setRequestBody(data.asParam());
+            return client.getPage(request);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     private static WebResponse request(String api, Method method, WebCookie cookie, Request data){
@@ -132,7 +168,6 @@ public class NetManager {
             TimeUnit.MILLISECONDS.sleep(500);  //有过快访问限流机制，需要缓冲时间，最低0.5秒！
             return new WebResponse(resp.statusCode(), resp.parse(), new WebCookie(resp.cookies()));
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
             return WebResponse.ERR_RESPONSE;
         }
     }
@@ -148,67 +183,5 @@ public class NetManager {
             return Base64.getEncoder().encodeToString(encrypted);   //使用Base64二次加密
         }catch (GeneralSecurityException ignore){}
         return "";
-    }
-
-    public static <T> T userDetail(String session, ResponseParser<T> parser){
-        return parser.parse(createGetWithSession(session, "/xjInfoAction.do?oper=xjxx"));
-    }
-
-    public static BufferedInputStream userDetailHeadImg(String session){
-        try {
-            Connection con = Jsoup.connect("/xjInfoAction.do?oper=img");
-            con.header("Cookie", "JSESSIONID="+session);
-            con.ignoreContentType(true);
-            Connection.Response response = con.execute();
-            return response.bodyStream();
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static <T> T scorePlan(String session, ResponseParser<T> parser){
-        return parser.parse(createGetWithSession(session, "/gradeLnAllAction.do?type=ln&oper=lnFajhKcCjInfo"));
-    }
-
-    public static <T> T scoreProgram(String session, ResponseParser<T> parser){
-        WebResponse response = createGetWithSession(session, "/gradeLnAllAction.do?type=ln&oper=fa");
-        if(response.getStatusCode() != 200) return null;
-        String url = response.getDocument().getElementsByAttributeValue("name", "lnfaIfra").first().attr("src");
-        return parser.parse(createGetWithSession(session, "/"+url));
-    }
-
-    public static <T> T changePassword(String session, JSONObject data, ResponseParser<T> parser){
-        return parser.parse(createPostWithSession(session,  "/modifyPassWordAction.do", data));
-    }
-
-    public static <T> T classes(String session, String clazz, String term, ResponseParser<T> parser){
-        try {
-            clazz = URLEncoder.encode(clazz, "gbk");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return parser.parse(createGetWithSession(session, "/bjKbInfoAction.do?oper=bjkb_xx&xzxjxjhh="+term+"&xbjh="+clazz+"&xbm="+clazz));
-    }
-
-    public static <T> T classesElective(String session, ResponseParser<T> parser){
-        return parser.parse(createGetWithSession(session, "/xkAction.do?actionType=6"));
-    }
-
-    public static List<String> classesElectiveList(String session, ResponseParser<List<String>> parser){
-        return parser.parse(createGetWithSession(session, "/gradeLnAllAction.do?type=ln&oper=lnfaqk&flag=zx"));
-    }
-
-    private static WebResponse createGetWithSession(String session, String url){
-        Connection con = Jsoup.connect(ip+url);
-        con.header("Cookie", "JSESSIONID="+session);
-        return connect(con, Connection.Method.GET);
-    }
-
-    private static WebResponse createPostWithSession(String session, String url, JSONObject data){
-        Connection con = Jsoup.connect(ip+url);
-        con.header("Cookie", "JSESSIONID="+session);
-        data.forEach((k, v) -> con.data(k, v.toString()));
-        return connect(con, Connection.Method.POST);
     }
 }

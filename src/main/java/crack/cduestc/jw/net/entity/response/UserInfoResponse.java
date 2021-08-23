@@ -20,7 +20,7 @@ public class UserInfoResponse extends JSONResponse{
     @Info("学历层次")
     private String level;
     @Info("年级")
-    private String grade;
+    private int grade;
     @Info("所属校区")
     private String local;
     @Info("学籍状态")

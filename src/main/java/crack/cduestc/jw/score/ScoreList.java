@@ -1,26 +1,67 @@
 package crack.cduestc.jw.score;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-public interface ScoreList {
+public class ScoreList implements Iterable<List<Score>>{
 
-    /**
-     * 获取某一个学期的成绩
-     * @param term 某个学期的成绩
-     * @return 及格成绩
-     */
-    List<Score> getScore(String term);
+    private final Map<String, List<Score>> scoreMap;
+    private final Set<String> terms;
 
-    /**
-     * 获取所有的学期
-     * @return 学期列表
-     */
-    Set<String> getTerms();
+    public ScoreList(Map<String, List<Score>> scoreMap, Set<String> terms) {
+        this.scoreMap = scoreMap;
+        this.terms = terms;
+    }
 
     /**
-     * 遍历并操作
-     * @param consumer 操作接口
+     * 获取某一个学年学期的成绩
+     * @param year 学年
+     * @param term 学期
+     * @return 对应学年学期的成绩
      */
-    void forEach(BiConsumer<String, List<Score>> consumer);
+    public List<Score> getScore(String year, int term){
+        return scoreMap.getOrDefault(year+term, Collections.emptyList());
+    }
+
+    /**
+     * 获取所有的学年（每个学年两个学期）
+     * @return 学年列表
+     */
+    public Set<String> getTerms(){
+        return terms;
+    }
+
+    @Override
+    public Iterator<List<Score>> iterator() {
+        return new ScoreIterator(terms.iterator());
+    }
+
+    @Override
+    public String toString() {
+        return scoreMap.toString();
+    }
+
+    class ScoreIterator implements Iterator<List<Score>>{
+
+        Iterator<String> terms;
+
+        ScoreIterator(Iterator<String> terms){
+            this.terms = terms;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return terms.hasNext();
+        }
+
+        @Override
+        public List<Score> next() {
+            String term = terms.next();
+            List<Score> list = new ArrayList<>(scoreMap.get(term + 1));
+            if(scoreMap.containsKey(term+2)) list.addAll(scoreMap.get(term+2));
+            return list;
+        }
+    }
 }

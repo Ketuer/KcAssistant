@@ -1,5 +1,6 @@
 # KcAssistant 教务系统助手
-* 由于教务系统升级，本系统即将升级为2.0版本
+现已对接到新教务，欢迎使用！
+***
 你可以将此项目和 [BaiAssistant 百叶计划助手](https://github.com/Ketuer/BaiAssistant) 配合使用。</br>
 本项目与BaiAssistant相同，同样是通过接口直接操作教务账号，包括成绩查询、学籍信息查询、课表查询、选修课报名等操作。</br>
 
@@ -10,6 +11,10 @@
 * 如果喜欢本项目，请点个star⭐️
 
 ## 版本历史 ⚒
+* ### 2.0.0 - Release
+  * 对接全新的教务系统。
+  * 由于对接了新的教务系统，使用上可能会有一些不同。
+  * 快速开始部分教程已更新~
 * ### 1.1.6 - Release
   * 教务外网接口调整至4567
   * 修复某些课程不按分数制导致无法获取的问题
@@ -36,10 +41,8 @@
 
 ### 已知问题
 分为 系统问题 和 代码问题，系统问题是教务系统本身的问题，代码问题是本项目未完善的问题
-* [🚦严重系统问题] 即使在未登录的情况下，直接调用教务重置密码接口能够任意更改其他用户的密码（包括教师和学生的账号），
-  本项目提供的是正常使用接口，不提供相关非法操作接口，如有兴趣可以自行实现，通过此接口对学校造成任何损失，后果自负。
-* [系统问题] 有时候会调用接口莫名其妙连接超时，重新调用即可，影响不大。
-* [系统问题] 在某些网络情况下，无法获取选修课程表内容。
+
+_暂无问题发现_
 
 ### 添加依赖 🔮
 * 直接下载最新的 [KcAssistant-X.X-Release.jar](https://github.com/Ketuer/KcAssistant/releases/) 和 [FastJSON-1.2.76.jar](https://repo1.maven.org/maven2/com/alibaba/fastjson/1.2.76/fastjson-1.2.76.jar) 和 [Jsoup-1.3.1.jar](https://repo1.maven.org/maven2/org/jsoup/jsoup/1.13.1/jsoup-1.13.1.jar) 并导入jar文件作为依赖。
@@ -58,7 +61,7 @@
   <dependency>
     <groupId>crack.cduestc</groupId>
     <artifactId>jw</artifactId>
-    <version>1.1.6-Release</version>
+    <version>2.0.0-Release</version>
   </dependency>
 </dependencies>
 ```
@@ -71,16 +74,9 @@ public class Main {
         //登陆账号，请不要使用new，而是使用create方法创建
         KcAccount account = KcAccount.create("2014564546", "我是密码");
 
-        //进行登陆并判断是否登陆成功
-        if(account.login()){
-            //获取个人学籍信息
-            System.out.println(account.getUserDetail());
-
-            //获取学期成绩列表（包含选项和必修成绩、也包括挂科和未挂科）
-            account.getScore().forEach((k ,v) -> System.out.println(k+" -> ("+v.size()+")"+v));
-        }else {
-            System.out.println("登陆失败！");
-        }
+        account.login();  //如果登陆失败会抛出异常！
+        System.out.println(account.getInfo());  //默认以JSON形式打印用户数据
+        account.logout();   //最好还是退出登陆！
     }
 }
 ```
@@ -90,15 +86,12 @@ public class Main {
   public static void main(String[] args) {
     //登陆账号
     KcAccount account = KcAccount.create("2014564546", "我是密码");
-    if(account.login()){
-      //获取用户的课程表信息
-      account
-              .getClassTable(4)  //获取第4个学期的课程表（本科一共8个学期，专科一共6个学期，范围1~8/1~6）
-              .forEach((k, v) -> System.out.println("星期"+k+" -> "+v));   //将每天的课程打印到控制台
-      //注意，一共7天，每天11节课（按45分钟小课计算），有可能出现第n节课有两门课程的情况，所以是以List方式存储
-    }else {
-      System.out.println("登陆失败！");
-    }
+    account.login();  //如果登陆失败会抛出异常！
+    account
+            .getClassTable(1)    //获取第一学期的课程表
+            .getClassInOneDay(1)      //仅获取周一的课程
+            .forEach(System.out::println);  //打印所有周一的课程
+    account.logout();   //最好还是退出登陆！
   }
 }
 ```

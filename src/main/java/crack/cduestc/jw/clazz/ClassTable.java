@@ -1,20 +1,38 @@
 package crack.cduestc.jw.clazz;
 
+import crack.cduestc.jw.net.entity.response.ClassesResponse;
+
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-public interface ClassTable {
+public class ClassTable {
+
+    private ClassTable(){}
+
+    private final List<Clazz> clazzList = new ArrayList<>();
+
+    public static ClassTable convertToTable(ClassesResponse response){
+        ClassTable classTable = new ClassTable();
+        response.forEach(clazz -> classTable.clazzList.add(new Clazz(clazz)));
+        return classTable;
+    }
+
     /**
-     * 获取某一天的课程表，存储形式为 第i节 - 课程
+     * 获取某一天的课程表
      * @param day 1-7（周一 ~ 周日）
-     * @return 课程表
+     * @return 课程列表
      */
-    Map<Integer, List<Clazz>> getClassInOneDay(int day);
+    public List<Clazz> getClassInOneDay(int day){
+        return clazzList.stream().filter(c -> c.day == day).collect(Collectors.toList());
+    }
 
     /**
-     * 遍历操作
+     * 遍历所有课程表
      * @param consumer 消费者
      */
-    void forEach(BiConsumer<Integer, Map<Integer, List<Clazz>>> consumer);
+    public void forEach(Consumer<Clazz> consumer){
+        clazzList.forEach(consumer);
+    }
 }

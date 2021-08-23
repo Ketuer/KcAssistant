@@ -10,12 +10,12 @@ import crack.cduestc.jw.exception.PasswordRegexException;
 import crack.cduestc.jw.net.NetManager;
 import crack.cduestc.jw.net.entity.WebCookie;
 import crack.cduestc.jw.net.entity.request.LoginRequest;
-import crack.cduestc.jw.net.entity.response.ErrorResponse;
-import crack.cduestc.jw.net.entity.response.LoginResponse;
-import crack.cduestc.jw.net.entity.response.Response;
-import crack.cduestc.jw.net.entity.response.UserInfoResponse;
+import crack.cduestc.jw.net.entity.response.*;
 import crack.cduestc.jw.net.enums.Language;
+import crack.cduestc.jw.score.Score;
 import crack.cduestc.jw.score.ScoreList;
+
+import java.util.*;
 
 /**
  * 教务系统账号实体类
@@ -90,6 +90,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         if(NetManager.logout(this.cookie).getCode() != 200){
             throw new NetworkException("网络错误，请检查网络！");
         }
+        info = null;
     }
 
     @Override
@@ -123,17 +124,42 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
 
     @Override
     public ScoreList getScore() {
-        return null;
+        if(info == null) throw new AuthorizationException("账户未登录！");
+        Integer grade = (Integer) info.get("年级");
+        Response response = NetManager.score(cookie, 1, grade);
+        if(response.getCode() == 401){
+            ErrorResponse err = (ErrorResponse) response;
+            throw new AuthorizationException(err.getReason());
+        }else if(response.getCode() == 200){
+            ScoreResponse scoreResponse = (ScoreResponse) response;
+            Map<String, List<Score>> scoreMap = new HashMap<>();
+            Set<String> terms = new HashSet<>();
+            scoreResponse.forEach(score -> {
+                terms.add(score.get("学年").toString());
+                String key = score.get("学年").toString()+score.get("学期");
+                if(!scoreMap.containsKey(key)) scoreMap.put(key, new ArrayList<>());
+                scoreMap.get(key).add(new Score(score));
+            });
+            return new ScoreList(scoreMap, terms);
+        }else {
+            ErrorResponse err = (ErrorResponse) response;
+            throw new NetworkException(err.getReason());
+        }
     }
 
     @Override
     public ClassTable getClassTable(int term) {
-        return null;
-    }
-
-    @Override
-    public ClassTable getMainClassTable(int term) {
-        return null;
+        if(info == null) throw new AuthorizationException("账户未登录！");
+        Response response = NetManager.classes(cookie, term, (Integer) info.get("年级"));
+        if(response.getCode() == 401){
+            ErrorResponse err = (ErrorResponse) response;
+            throw new AuthorizationException(err.getReason());
+        }else if(response.getCode() == 200){
+            return ClassTable.convertToTable((ClassesResponse) response);
+        }else {
+            ErrorResponse err = (ErrorResponse) response;
+            throw new NetworkException(err.getReason());
+        }
     }
 
     public String getId() {
