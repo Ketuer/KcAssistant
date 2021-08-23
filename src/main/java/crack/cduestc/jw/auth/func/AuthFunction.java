@@ -14,13 +14,12 @@ public interface AuthFunction {
 
     /**
      * 登出
-     * @return 是否登出成功
      */
     void logout();
 
     /**
      * 重置密码
-     * @return 是否重置成功
+     * @param newPassword 新密码
      */
     void resetPassword(String newPassword);
 }
