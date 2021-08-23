@@ -85,6 +85,9 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         }
     }
 
+    /**
+     * 退出登陆此账号
+     */
     @Override
     public void logout() {
         if(NetManager.logout(this.cookie).getCode() != 200){
@@ -93,6 +96,10 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         info = null;
     }
 
+    /**
+     * 重置密码
+     * @param newPassword 新密码
+     */
     @Override
     public void resetPassword(String newPassword) {
         Response response = NetManager.resetPassword(cookie, newPassword, password);
@@ -107,7 +114,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
     }
 
     /**
-     * 更新个人信息
+     * 更新个人信息，重新拉取个人信息数据
      */
     public void refreshInfo(){
         Response response = NetManager.info(cookie);
@@ -122,6 +129,10 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         }
     }
 
+    /**
+     * 获取成绩信息
+     * @return 成绩信息
+     */
     @Override
     public ScoreList getScore() {
         if(info == null) throw new AuthorizationException("账户未登录！");
@@ -147,6 +158,11 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         }
     }
 
+    /**
+     * 获取课程表
+     * @param term 学期（本科为 1-8，专科为 1-6）
+     * @return 课程表
+     */
     @Override
     public ClassTable getClassTable(int term) {
         if(info == null) throw new AuthorizationException("账户未登录！");
@@ -182,6 +198,10 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         return name;
     }
 
+    /**
+     * 获取用户信息
+     * @return 用户信息
+     */
     public UserInfoResponse getInfo() {
         return info;
     }
