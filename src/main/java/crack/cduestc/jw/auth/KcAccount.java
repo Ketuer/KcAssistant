@@ -137,7 +137,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
     public ScoreList getScore() {
         if(info == null) throw new AuthorizationException("账户未登录！");
         Integer grade = (Integer) info.get("年级");
-        Response response = NetManager.score(cookie, 1, grade);
+        Response response = NetManager.score(cookie);
         if(response.getCode() == 401){
             ErrorResponse err = (ErrorResponse) response;
             throw new AuthorizationException(err.getReason());

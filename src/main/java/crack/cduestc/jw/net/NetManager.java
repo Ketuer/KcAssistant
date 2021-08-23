@@ -117,7 +117,7 @@ public class NetManager {
         return infoParser.parse(response.getDocument());
     }
 
-    public static Response score(WebCookie cookie, int semesterId, int grade){
+    public static Response score(WebCookie cookie){
         WebResponse response = request("/teach/grade/course/person!historyCourseGrade.action?projectType=MAJOR",
                 Method.GET, cookie, null);
         if(response.getStatusCode() != 200){
@@ -127,8 +127,14 @@ public class NetManager {
     }
 
     public static Response classes(WebCookie cookie, int term, int grade){
+        WebResponse response = request("/courseTableForStd.action", Method.GET, cookie, null);
+        String ids = response.getDocument().toString();
+        int index = ids.lastIndexOf("bg.form.addInput(form,\"ids\",\"") + 29, i = 1;
+        char[] chars = ids.substring(index, index + 20).toCharArray();
+        while (chars[i] != '\"') i++;
+        ids = new String(chars).substring(0, i);
         int semester = (2035 - grade) * 2 + term;
-        ClassesRequest request = new ClassesRequest(1, "class", 1, semester, "1462", "");
+        ClassesRequest request = new ClassesRequest(1, "class", 1, semester, ids, "");
         HtmlPage page = requestAsClient("/courseTableForStd!courseTable.action", Method.POST, cookie, request);
         if(page == null) return new ErrorResponse("网络错误！", 404);
         return semester > 36 ? classParser.parse(page) : oldClassParser.parse(page);
