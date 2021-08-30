@@ -1,5 +1,6 @@
 package crack.cduestc.jw.score;
 
+import com.alibaba.fastjson.JSONObject;
 import crack.cduestc.jw.net.entity.response.ScoreResponse;
 
 import java.lang.reflect.Field;
@@ -11,17 +12,6 @@ import java.lang.reflect.Field;
  * @since 1.0
  */
 public class Score {
-
-    public Score(ScoreResponse.SingleScoreResponse response){
-        for (Field field : response.getClass().getDeclaredFields()) {
-            if(!field.isAccessible()) field.setAccessible(true);
-            try {
-                Field thisField = this.getClass().getDeclaredField(field.getName());
-                if(!thisField.isAccessible()) thisField.setAccessible(true);
-                thisField.set(this, field.get(response));
-            } catch (NoSuchFieldException | IllegalAccessException ignored) {}
-        }
-    }
 
     /* 学年 */
     String year;
@@ -57,6 +47,96 @@ public class Score {
     double score_final;
     /* 绩点 */
     double points;
+
+    public Score(ScoreResponse.SingleScoreResponse response){
+        for (Field field : response.getClass().getDeclaredFields()) {
+            if(!field.isAccessible()) field.setAccessible(true);
+            try {
+                Field thisField = this.getClass().getDeclaredField(field.getName());
+                if(!thisField.isAccessible()) thisField.setAccessible(true);
+                thisField.set(this, field.get(response));
+            } catch (NoSuchFieldException | IllegalAccessException ignored) {}
+        }
+    }
+
+    public JSONObject toJSON(){
+        JSONObject object = new JSONObject();
+        for (Field field : this.getClass().getDeclaredFields()) {
+            if(!field.isAccessible()) field.setAccessible(true);
+            try {
+                object.put(field.getName(), field.get(this));
+            } catch (IllegalAccessException ignored) {}
+        }
+        return object;
+    }
+
+    public String getYear() {
+        return year;
+    }
+
+    public int getTerm() {
+        return term;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public String getIndex() {
+        return index;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public double getCredits() {
+        return credits;
+    }
+
+    public double getScore_all() {
+        return score_all;
+    }
+
+    public double getScore_normal() {
+        return score_normal;
+    }
+
+    public double getScore_terminal() {
+        return score_terminal;
+    }
+
+    public double getScore_middle() {
+        return score_middle;
+    }
+
+    public double getScore_task_normal() {
+        return score_task_normal;
+    }
+
+    public double getScore_task_terminal() {
+        return score_task_terminal;
+    }
+
+    public double getScore_exp_normal() {
+        return score_exp_normal;
+    }
+
+    public double getScore_exp_terminal() {
+        return score_exp_terminal;
+    }
+
+    public double getScore_final() {
+        return score_final;
+    }
+
+    public double getPoints() {
+        return points;
+    }
 
     @Override
     public String toString() {
