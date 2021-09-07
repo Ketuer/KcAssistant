@@ -1,7 +1,9 @@
 package crack.cduestc.jw.clazz;
 
+import com.alibaba.fastjson.JSONObject;
 import crack.cduestc.jw.net.entity.response.ClassesResponse;
 
+import java.lang.reflect.Field;
 import java.util.Set;
 
 public class Clazz {
@@ -28,6 +30,19 @@ public class Clazz {
         this.day = clazz.day;
         this.weekSet = clazz.weekSet;
         this.indexSet = clazz.indexSet;
+    }
+
+    public JSONObject toJSON(){
+        JSONObject object = new JSONObject();
+        for (Field fi : this.getClass().getDeclaredFields()) {
+            if (!fi.isAccessible()) fi.setAccessible(true);
+            try {
+                object.put(fi.getName(), fi.get(this));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return object;
     }
 
     @Override

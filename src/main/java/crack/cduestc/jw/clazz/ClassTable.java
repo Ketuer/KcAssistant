@@ -1,5 +1,6 @@
 package crack.cduestc.jw.clazz;
 
+import com.alibaba.fastjson.JSONArray;
 import crack.cduestc.jw.net.entity.response.ClassesResponse;
 
 import java.util.ArrayList;
@@ -34,5 +35,19 @@ public class ClassTable {
      */
     public void forEach(Consumer<Clazz> consumer){
         clazzList.forEach(consumer);
+    }
+
+    public JSONArray toJSONArray(){
+        JSONArray array = new JSONArray();
+        clazzList.forEach(clazz -> array.add(clazz.toJSON()));
+        return array;
+    }
+
+    /**
+     * 直接获取所有课程
+     * @return 课程
+     */
+    public List<Clazz> getClazzList() {
+        return clazzList;
     }
 }

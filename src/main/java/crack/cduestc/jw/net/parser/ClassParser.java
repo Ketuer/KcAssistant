@@ -24,6 +24,10 @@ public class ClassParser implements Parser<Response> {
         return new ClassesResponse(clazzList);
     }
 
+    protected int offset(){
+        return 2;
+    }
+
     protected void scanClazzAndAdd(int i, int start, int end, HtmlPage page, Map<Integer, Set<ClassesResponse.Clazz>> clazzMap){
         for (int j = start; j < end; j++) {
             int index = i * 13 + j;
@@ -34,7 +38,7 @@ public class ClassParser implements Parser<Response> {
                 while (index - x >= 0 && (clazz = clazzMap.get(index - x)) == null) x++;
                 if(clazz != null) {
                     int finalJ = j + 1;
-                    clazz.forEach(c -> c.indexSet.add(finalJ));
+                    clazz.forEach(c -> c.indexSet.add(finalJ > 3 ? finalJ - offset() : finalJ));
                 }
                 continue;
             }
@@ -72,7 +76,7 @@ public class ClassParser implements Parser<Response> {
             while (i < chars.length - 1 && chars[i] == ')') i++;
 
             clazzSet.add(new ClassesResponse.Clazz(name, id, teacher, local, day+1,
-                    toWeeks(week), new HashSet<Integer>(){{this.add(index);}}));
+                    toWeeks(week), new HashSet<Integer>(){{this.add(index > 3 ? index - offset() : index);}}));
         }
         return clazzSet;
     }

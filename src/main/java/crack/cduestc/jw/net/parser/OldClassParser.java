@@ -23,4 +23,8 @@ public class OldClassParser extends ClassParser{
         clazzMap.forEach((integer, clazz) -> clazzList.addAll(clazz));
         return new ClassesResponse(clazzList);
     }
+
+    protected int offset(){
+        return 0;
+    }
 }

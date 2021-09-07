@@ -39,6 +39,8 @@ public class ScoreResponse extends Response{
         String type;
         @Info("学分")
         double credits;
+        @Info("补考成绩")
+        double redo_score_all;
         @Info("总评成绩")
         double score_all;
         @Info("课堂平时成绩")

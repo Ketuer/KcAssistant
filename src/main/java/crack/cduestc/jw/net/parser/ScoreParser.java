@@ -12,6 +12,9 @@ public class ScoreParser implements Parser<ScoreResponse>{
     public ScoreResponse parse(Document document) {
         List<ScoreResponse.SingleScoreResponse> list = new ArrayList<>();
         Elements elements = document.getElementsByTag("tbody").get(1).getElementsByTag("tr");
+        Elements attrs = document.getElementsByTag("thead").get(1).getElementsByTag("th");
+        List<String> arr = new ArrayList<>();
+        attrs.forEach(e -> arr.add(e.text()));
         elements.forEach(e -> {
             ScoreResponse.SingleScoreResponse single = new ScoreResponse.SingleScoreResponse();
             Elements tds = e.getElementsByTag("td");
@@ -22,16 +25,9 @@ public class ScoreParser implements Parser<ScoreResponse>{
             single.setField("课程名称", tds.get(3).text().replaceAll(" \\(.*\\)", ""));
             single.setField("课程类别", tds.get(4).text());
             single.setField("学分", tds.get(5).text());
-            single.setField("总评成绩", tds.get(6).text());
-            single.setField("课堂平时成绩", tds.get(7).text());
-            single.setField("课堂期末成绩", tds.get(8).text());
-            single.setField("课堂期中成绩", tds.get(9).text());
-            single.setField("实践平时成绩", tds.get(10).text());
-            single.setField("实践期末成绩", tds.get(11).text());
-            single.setField("实验平时成绩", tds.get(12).text());
-            single.setField("实验期末成绩", tds.get(13).text());
-            single.setField("最终", tds.get(14).text());
-            single.setField("绩点", tds.get(15).text());
+            for (int i = 6; i < arr.size(); i++) {
+                single.setField(arr.get(i),  tds.get(i).text());
+            }
             list.add(single);
         });
         return new ScoreResponse(list);

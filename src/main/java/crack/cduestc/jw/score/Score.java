@@ -27,6 +27,8 @@ public class Score {
     String type;
     /* 学分 */
     double credits;
+    /* 补考成绩 */
+    double redo_score_all;
     /* 总评成绩 */
     double score_all;
     /* 课堂平时成绩 */
@@ -97,6 +99,19 @@ public class Score {
     public double getCredits() {
         return credits;
     }
+
+    public double getRedo_score_all() {
+        return redo_score_all;
+    }
+
+    /**
+     * 获取最终成绩（补考后的计算）
+     * @return 最终成绩
+     */
+    public double getFinalScore(){
+        return Math.max(score_all, redo_score_all);
+    }
+
 
     public double getScore_all() {
         return score_all;
