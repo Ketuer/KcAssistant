@@ -53,7 +53,6 @@ public class ClassParser implements Parser<Response> {
         char[] chars = content.toCharArray();
         int i = 0;
         StringBuilder builder;
-        System.out.println(content);
         while (i < chars.length - 1){
             builder = new StringBuilder();
             while(chars[i++] != '(' || !isWord(chars, i)) builder.append(chars[i - 1]);
@@ -75,8 +74,6 @@ public class ClassParser implements Parser<Response> {
 
             clazzSet.add(new ClassesResponse.Clazz(name, id, teacher, local, day+1,
                     toWeeks(week), new HashSet<Integer>(){{this.add(index > 3 ? index - offset() : index);}}));
-
-            System.out.println(name);
         }
         return clazzSet;
     }
