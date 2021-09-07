@@ -1,5 +1,7 @@
 package crack.cduestc.jw.net;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
@@ -7,12 +9,10 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.util.Cookie;
 import crack.cduestc.jw.net.entity.WebCookie;
 import crack.cduestc.jw.net.entity.WebResponse;
-import crack.cduestc.jw.net.entity.request.ClassesRequest;
-import crack.cduestc.jw.net.entity.request.LoginRequest;
-import crack.cduestc.jw.net.entity.request.PasswordRequest;
-import crack.cduestc.jw.net.entity.request.Request;
+import crack.cduestc.jw.net.entity.request.*;
 import crack.cduestc.jw.net.entity.response.ErrorResponse;
 import crack.cduestc.jw.net.entity.response.Response;
+import crack.cduestc.jw.net.entity.response.SelectClassResponse;
 import crack.cduestc.jw.net.entity.response.SuccessResponse;
 import crack.cduestc.jw.net.enums.Method;
 import crack.cduestc.jw.net.parser.*;
@@ -138,6 +138,30 @@ public class NetManager {
         HtmlPage page = requestAsClient("/courseTableForStd!courseTable.action", Method.POST, cookie, request);
         if(page == null) return new ErrorResponse("网络错误！", 404);
         return semester > 36 ? classParser.parse(page) : oldClassParser.parse(page);
+    }
+
+    public static Response selectClassList(WebCookie cookie){
+        WebResponse response = request("/stdElectCourse.action", Method.GET, cookie, null);
+        String start = "<a href=\"/eams/stdElectCourse!defaultPage.action?electionProfile.id=";
+        String resp = response.getDocument().toString();
+        if(resp.contains("现在未到选课时间")) return new ErrorResponse(response.getDocument().text(), 401);
+        int left = resp.indexOf(start) + start.length(), right = resp.indexOf("\" style=\"margin:auto;font-size:16px;\" target=\"elect_page\">进入选课&gt;&gt;&gt;&gt;</a>");
+        String profileId = resp.substring(left, right);
+        request("/stdElectCourse!defaultPage.action?electionProfile.id="+profileId, Method.GET, cookie, null);
+        WebResponse list = request("/stdElectCourse!data.action?profileId="+profileId, Method.GET, cookie, null);
+        String data = list.getDocument().text();
+        JSONArray classArray = JSON.parseArray(data.substring(18, data.length() - 1));
+        return new SelectClassResponse(classArray);
+    }
+
+    public static Response doSelectClass(WebCookie cookie, String classId){
+        SelectClassRequest request = new SelectClassRequest(true, classId);
+        WebResponse response = request("/stdElectCourse.action", Method.POST, cookie, request);
+        String select = response.getDocument().text();
+        if(select.contains("成功") || select.contains("uccess")) {
+            return new SuccessResponse();
+        }
+        return new ErrorResponse(select, 401);
     }
 
     private synchronized static HtmlPage requestAsClient(String api, Method method, WebCookie cookie, Request data){

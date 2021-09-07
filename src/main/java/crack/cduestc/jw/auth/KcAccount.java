@@ -1,9 +1,11 @@
 package crack.cduestc.jw.auth;
 
+import com.alibaba.fastjson.JSONObject;
 import crack.cduestc.jw.auth.func.AuthFunction;
 import crack.cduestc.jw.auth.func.ClazzFunction;
 import crack.cduestc.jw.auth.func.ScoreFunction;
 import crack.cduestc.jw.clazz.ClassTable;
+import crack.cduestc.jw.clazz.SelectableClass;
 import crack.cduestc.jw.exception.AuthorizationException;
 import crack.cduestc.jw.exception.NetworkException;
 import crack.cduestc.jw.exception.PasswordRegexException;
@@ -14,6 +16,7 @@ import crack.cduestc.jw.net.entity.response.*;
 import crack.cduestc.jw.net.enums.Language;
 import crack.cduestc.jw.score.Score;
 import crack.cduestc.jw.score.ScoreList;
+import sun.nio.ch.Net;
 
 import java.util.*;
 
@@ -176,6 +179,34 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
             ErrorResponse err = (ErrorResponse) response;
             throw new NetworkException(err.getReason());
         }
+    }
+
+    /**
+     * 获取选课列表
+     * @return 选课列表
+     */
+    public List<SelectableClass> getSelectClassList(){
+        if(info == null) throw new AuthorizationException("账户未登录！");
+        Response response = NetManager.selectClassList(cookie);
+        if(response.getCode() == 200){
+            SelectClassResponse classResponse = (SelectClassResponse) response;
+            List<SelectableClass> list = new ArrayList<>();
+            classResponse.forEach(resp -> list.add(new SelectableClass(resp)));
+            return list;
+        }else {
+            throw new IllegalStateException(((ErrorResponse)response).getReason());
+        }
+    }
+
+    /**
+     * 执行选课操作，选课失败会抛出异常
+     * @param classId 课程id
+     */
+    public void doSelectClass(String classId){
+        if(info == null) throw new AuthorizationException("账户未登录！");
+        Response response = NetManager.doSelectClass(cookie, classId);
+        if(response.getCode() == 200) return;
+        throw new IllegalStateException(((ErrorResponse)response).getReason());
     }
 
     public String getId() {

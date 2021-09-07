@@ -1,5 +1,6 @@
 package crack.cduestc.jw.net.entity.response;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import crack.cduestc.jw.net.anno.Info;
 
@@ -64,6 +65,9 @@ public abstract class JSONResponse extends Response{
                         break;
                     case "java.util.Date":
                         field.set(this, format.parse(value));
+                        break;
+                    case "com.alibaba.fastjson.JSONArray":
+                        field.set(this, JSONArray.parseArray(value));
                         break;
                     default:
                         field.set(this, value);

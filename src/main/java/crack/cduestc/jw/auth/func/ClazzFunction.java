@@ -1,6 +1,9 @@
 package crack.cduestc.jw.auth.func;
 
 import crack.cduestc.jw.clazz.ClassTable;
+import crack.cduestc.jw.clazz.SelectableClass;
+
+import java.util.List;
 
 public interface ClazzFunction {
     /**
@@ -9,4 +12,8 @@ public interface ClazzFunction {
      * @return 课程表
      */
     ClassTable getClassTable(int term);
+
+    void doSelectClass(String classId);
+
+    List<SelectableClass> getSelectClassList();
 }
