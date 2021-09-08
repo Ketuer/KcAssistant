@@ -152,12 +152,12 @@ public class NetManager {
         WebResponse list = request("/stdElectCourse!data.action?profileId="+profileId, Method.GET, cookie, null);
         String data = list.getDocument().text();
         JSONArray classArray = JSON.parseArray(data.substring(18, data.length() - 1));
-        return new SelectClassResponse(classArray);
+        return new SelectClassResponse(classArray, profileId);
     }
 
-    public static Response doSelectClass(WebCookie cookie, String classId){
+    public static Response doSelectClass(WebCookie cookie, String classId, String profileId){
         SelectClassRequest request = new SelectClassRequest(true, classId);
-        WebResponse response = request("/stdElectCourse.action", Method.POST, cookie, request);
+        WebResponse response = request("/stdElectCourse!batchOperator.action?profileId="+profileId, Method.POST, cookie, request);
         String select = response.getDocument().text();
         if(select.contains("成功") || select.contains("uccess")) {
             return new SuccessResponse();
@@ -192,7 +192,7 @@ public class NetManager {
         return response;
     }
 
-    private synchronized static WebResponse connect(Connection con, Connection.Method method){
+    private static WebResponse connect(Connection con, Connection.Method method){
         try {
             con.timeout(30000);
             Connection.Response resp=con.method(method).execute();

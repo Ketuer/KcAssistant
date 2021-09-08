@@ -41,7 +41,8 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
     private String name;
     /* 个人信息 */
     private UserInfoResponse info;
-
+    /* ProfileId */
+    private String profileId;
 
     private KcAccount(String id, String password, Language language){
         this.id = id;
@@ -186,10 +187,12 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
      * @return 选课列表
      */
     public List<SelectableClass> getSelectClassList(){
+        profileId = null;
         if(info == null) throw new AuthorizationException("账户未登录！");
         Response response = NetManager.selectClassList(cookie);
         if(response.getCode() == 200){
             SelectClassResponse classResponse = (SelectClassResponse) response;
+            this.profileId = classResponse.getProfileId();
             List<SelectableClass> list = new ArrayList<>();
             classResponse.forEach(resp -> list.add(new SelectableClass(resp)));
             return list;
@@ -203,8 +206,9 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
      * @param classId 课程id
      */
     public void doSelectClass(String classId){
+        if(profileId == null) throw new IllegalStateException("需要先获取选修课程列表用于后台生成！");
         if(info == null) throw new AuthorizationException("账户未登录！");
-        Response response = NetManager.doSelectClass(cookie, classId);
+        Response response = NetManager.doSelectClass(cookie, classId, profileId);
         if(response.getCode() == 200) return;
         throw new IllegalStateException(((ErrorResponse)response).getReason());
     }

@@ -11,8 +11,10 @@ import java.util.function.Consumer;
 public class SelectClassResponse extends Response{
 
     private final List<SingleSelectClass> selects;
+    private final String profileId;
 
-    public SelectClassResponse(JSONArray array){
+    public SelectClassResponse(JSONArray array, String profileId){
+        this.profileId = profileId;
         this.selects = new ArrayList<>();
         array.forEach(raw -> {
             JSONObject object = JSONObject.parseObject(raw.toString());
@@ -20,6 +22,10 @@ public class SelectClassResponse extends Response{
             object.forEach((k, v) -> singleSelectClass.setField(k, v.toString()));
             selects.add(singleSelectClass);
         });
+    }
+
+    public String getProfileId() {
+        return profileId;
     }
 
     public JSONArray asJSONArray(){
