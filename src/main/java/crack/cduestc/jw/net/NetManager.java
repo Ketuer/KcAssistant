@@ -7,6 +7,8 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.util.Cookie;
+import crack.cduestc.jw.net.captcha.ICaptcha;
+import crack.cduestc.jw.net.captcha.WindowInputCaptcha;
 import crack.cduestc.jw.net.entity.WebCookie;
 import crack.cduestc.jw.net.entity.WebResponse;
 import crack.cduestc.jw.net.entity.request.*;
@@ -22,8 +24,13 @@ import org.jsoup.Jsoup;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
@@ -38,11 +45,16 @@ import java.util.logging.Logger;
  */
 public class NetManager {
 
+    private static ICaptcha captcha = new WindowInputCaptcha();
     private static final LoginParser loginParser = new LoginParser();
     private static final InfoParser infoParser = new InfoParser();
     private static final ScoreParser scoreParser = new ScoreParser();
     private static final ClassParser classParser = new ClassParser();
     private static final OldClassParser oldClassParser = new OldClassParser();
+
+    public static void setCaptcha(ICaptcha captcha) {
+        NetManager.captcha = captcha;
+    }
 
     /* 资源消耗巨大，某些需要进行动态js渲染的页面才会用到 */
     private static final WebClient client = new WebClient(BrowserVersion.CHROME);
@@ -54,16 +66,20 @@ public class NetManager {
     private static final String ip = "http://www.cduestc.cn/eams";
 
     public static Response login(LoginRequest loginData){
+
         WebResponse main = request("/loginExt.action", Method.GET, null, null);
         if(main.getStatusCode() != 200){
             return new ErrorResponse(main.getReason(), main.getStatusCode());
         }
+        BufferedImage image = downImage("/captcha/image.action", main.getCookies());
+        String verifyCode = captcha.ocr(image);
+        loginData.captcha(verifyCode);
         String str = main.getDocument().toString();
         String salt = str.substring(str.indexOf("CryptoJS.SHA1('") + 15, str.indexOf("' + form['password']"));  //解析动态盐
         loginData.password(DigestUtils.sha1Hex(salt+loginData.getPassword()));  //密码加盐计算SHA1处理
         WebResponse response = request("/loginExt.action", Method.POST, main.getCookies(), loginData);
-        if(main.getStatusCode() != 200){
-            return new ErrorResponse(main.getReason(), main.getStatusCode());
+        if(response.getStatusCode() != 200){
+            return new ErrorResponse(response.getReason(), response.getStatusCode());
         }
         String resp = response.getDocument().toString();
         if(resp.contains("密码错误") || resp.contains("Error Password")){
@@ -187,7 +203,11 @@ public class NetManager {
             return WebResponse.LIMIT_RESPONSE;   //你没猜错，有限流机制！
         }
         if(cookie != null && !api.equals("/logoutExt.action") && resp.contains("账号密码登录")){   //是否被重定向到登陆页面，如果是，表示没登陆
-            return WebResponse.AUTH_RESPONSE;
+            if(resp.contains("验证码不正确")){
+                return WebResponse.AUTH_FAILURE_CODE;
+            }else {
+                return WebResponse.AUTH_FAILURE_INFO;
+            }
         }
         return response;
     }
@@ -214,5 +234,21 @@ public class NetManager {
             return Base64.getEncoder().encodeToString(encrypted);   //使用Base64二次加密
         }catch (GeneralSecurityException ignore){}
         return "";
+    }
+
+    private static BufferedImage downImage(String imgUrl, WebCookie webCookie) {
+        try {
+            URL url = new URL(ip+imgUrl);
+            URLConnection connection = url.openConnection();
+            connection.setConnectTimeout(10 * 1000);
+            connection.setRequestProperty("Cookie", webCookie.toCookieString());
+            InputStream in = connection.getInputStream();
+            BufferedImage image = ImageIO.read(in);
+            in.close();
+            return image;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

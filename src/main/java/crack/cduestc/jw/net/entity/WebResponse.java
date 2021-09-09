@@ -37,6 +37,8 @@ public class WebResponse {
         return reason;
     }
 
+    public final static WebResponse AUTH_FAILURE_INFO= new WebResponse(402, null, null, "用户名或密码错误！");
+    public final static WebResponse AUTH_FAILURE_CODE = new WebResponse(403, null, null, "验证码错误！");
     public final static WebResponse AUTH_RESPONSE = new WebResponse(401, null, null, "账户未登陆验证！");
     public final static WebResponse ERR_RESPONSE = new WebResponse(404, null, null, "网络错误！");
     public final static WebResponse LIMIT_RESPONSE = new WebResponse(405, null, null, "请求频率过快！");

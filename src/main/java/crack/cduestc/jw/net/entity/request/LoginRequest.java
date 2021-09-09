@@ -10,6 +10,8 @@ public class LoginRequest extends Request{
     private String password;
     @RequestParam("session_locale")
     private Language lang;
+    @RequestParam("captcha_response")
+    private String captcha;
 
     public LoginRequest(String name, String password, Language lang) {
         this.name = name;
@@ -29,6 +31,11 @@ public class LoginRequest extends Request{
 
     public LoginRequest lang(Language lang){
         this.lang = lang;
+        return this;
+    }
+
+    public LoginRequest captcha(String captcha) {
+        this.captcha = captcha;
         return this;
     }
 
