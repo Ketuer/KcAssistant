@@ -213,6 +213,18 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         throw new IllegalStateException(((ErrorResponse)response).getReason());
     }
 
+    /**
+     * 执行退课操作
+     * @param classId 课程id
+     */
+    public void undoSelectClass(String classId){
+        if(profileId == null) throw new IllegalStateException("需要先获取选修课程列表用于后台生成！");
+        if(info == null) throw new AuthorizationException("账户未登录！");
+        Response response = NetManager.undoSelectClass(cookie, classId, profileId);
+        if(response.getCode() == 200) return;
+        throw new IllegalStateException(((ErrorResponse)response).getReason());
+    }
+
     public String getId() {
         return id;
     }

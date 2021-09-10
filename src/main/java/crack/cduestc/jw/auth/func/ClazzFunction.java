@@ -15,5 +15,7 @@ public interface ClazzFunction {
 
     void doSelectClass(String classId);
 
+    void undoSelectClass(String classId);
+
     List<SelectableClass> getSelectClassList();
 }

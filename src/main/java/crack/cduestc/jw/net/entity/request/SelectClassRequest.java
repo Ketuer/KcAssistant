@@ -12,7 +12,7 @@ public class SelectClassRequest extends Request{
 
     public SelectClassRequest(boolean optype, String lesson0) {
         this.optype = optype;
-        this.operator0 = lesson0+":true:0";
+        this.operator0 = lesson0+":"+optype+":0";
         this.lesson0 = lesson0;
     }
 }

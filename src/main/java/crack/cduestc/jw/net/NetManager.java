@@ -181,6 +181,16 @@ public class NetManager {
         return new ErrorResponse(select, 401);
     }
 
+    public static Response undoSelectClass(WebCookie cookie, String classId, String profileId){
+        SelectClassRequest request = new SelectClassRequest(false, classId);
+        WebResponse response = request("/stdElectCourse!batchOperator.action?profileId="+profileId, Method.POST, cookie, request);
+        String select = response.getDocument().text();
+        if(select.contains("成功") || select.contains("uccess")) {
+            return new SuccessResponse();
+        }
+        return new ErrorResponse(select, 401);
+    }
+
     private synchronized static HtmlPage requestAsClient(String api, Method method, WebCookie cookie, Request data){
         try {
             client.getCookieManager().clearCookies();
