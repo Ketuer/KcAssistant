@@ -39,6 +39,16 @@ public class UserInfoResponse extends JSONResponse{
     private String direct;
     @Info("行政管理院系")
     private String management;
+    @Info("政治面貌")
+    private String political;
+    @Info("民族")
+    private String nationality;
+    @Info("出生年月")
+    private String birth;
+    @Info("证件类型")
+    private String certificateType;
+    @Info("证件号码")
+    private String certificateId;
     @Info("入校时间")
     private Date startDate;
     @Info("毕业时间")

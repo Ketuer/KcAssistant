@@ -39,7 +39,7 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
     private String role;
     /* 用户名称 */
     private String name;
-    /* 个人信息 */
+    /* 学籍信息 */
     private UserInfoResponse info;
     /* ProfileId */
     private String profileId;
