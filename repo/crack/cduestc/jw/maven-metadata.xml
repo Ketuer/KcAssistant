@@ -3,7 +3,7 @@
   <groupId>crack.cduestc</groupId>
   <artifactId>jw</artifactId>
   <versioning>
-    <release>2.0.9-Release</release>
+    <release>2.0.11-Release</release>
     <versions>
       <version>1.0-Release</version>
       <version>1.0.5-Release</version>
@@ -15,7 +15,8 @@
       <version>2.0.5-Release</version>
       <version>2.0.7-Release</version>
       <version>2.0.9-Release</version>
+      <version>2.0.11-Release</version>
     </versions>
-    <lastUpdated>20210910021832</lastUpdated>
+    <lastUpdated>20211027022751</lastUpdated>
   </versioning>
 </metadata>
