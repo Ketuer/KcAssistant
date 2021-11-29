@@ -2,11 +2,14 @@ package crack.cduestc.jw.net;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.util.Cookie;
+import crack.cduestc.jw.eval.Evaluation;
+import crack.cduestc.jw.eval.EvaluationTable;
 import crack.cduestc.jw.net.captcha.ICaptcha;
 import crack.cduestc.jw.net.captcha.WindowInputCaptcha;
 import crack.cduestc.jw.net.entity.WebCookie;
@@ -21,6 +24,7 @@ import crack.cduestc.jw.net.parser.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -51,6 +55,8 @@ public class NetManager {
     private static final ScoreParser scoreParser = new ScoreParser();
     private static final ClassParser classParser = new ClassParser();
     private static final OldClassParser oldClassParser = new OldClassParser();
+    private static final EvaluationParser evalParser = new EvaluationParser();
+    private static final EvaluationTableParser tableParser = new EvaluationTableParser();
 
     public static void setCaptcha(ICaptcha captcha) {
         NetManager.captcha = captcha;
@@ -170,7 +176,15 @@ public class NetManager {
     }
 
     public static Response doSelectClass(WebCookie cookie, String classId, String profileId){
-        SelectClassRequest request = new SelectClassRequest(true, classId);
+        return taskSelectClass(true, cookie, classId, profileId);
+    }
+
+    public static Response undoSelectClass(WebCookie cookie, String classId, String profileId){
+        return taskSelectClass(false, cookie, classId, profileId);
+    }
+
+    private static Response taskSelectClass(boolean optype, WebCookie cookie, String classId, String profileId){
+        SelectClassRequest request = new SelectClassRequest(optype, classId);
         WebResponse response = request("/stdElectCourse!batchOperator.action?profileId="+profileId, Method.POST, cookie, request);
         String select = response.getDocument().text();
         if(select.contains("成功") || select.contains("uccess")) {
@@ -179,14 +193,27 @@ public class NetManager {
         return new ErrorResponse(select, 401);
     }
 
-    public static Response undoSelectClass(WebCookie cookie, String classId, String profileId){
-        SelectClassRequest request = new SelectClassRequest(false, classId);
-        WebResponse response = request("/stdElectCourse!batchOperator.action?profileId="+profileId, Method.POST, cookie, request);
-        String select = response.getDocument().text();
-        if(select.contains("成功") || select.contains("uccess")) {
-            return new SuccessResponse();
+    public static Response getEvaluationList(WebCookie cookie){
+        WebResponse response = request("/quality/stdEvaluate.action", Method.GET, cookie, null);
+        if(response.getStatusCode() != 200){
+            return new ErrorResponse(response.getReason(), response.getStatusCode());
         }
-        return new ErrorResponse(select, 401);
+        return evalParser.parse(response.getDocument());
+    }
+
+    public static Response getEvalTable(WebCookie cookie, Evaluation evaluation){
+        WebResponse response = request(evaluation.getUrl().replace("/eams", ""), Method.GET, cookie, null);
+        if(response.getStatusCode() != 200){
+            return new ErrorResponse(response.getReason(), response.getStatusCode());
+        }
+        return tableParser.parse(response.getDocument());
+    }
+
+    public static Response finishEval(WebCookie cookie, EvaluationTable table){
+        WebResponse response = request("/quality/stdEvaluate!finishAnswer.action", Method.POST, cookie, new EvaluationRequest(table));
+        if(response.getStatusCode() == 200)
+            return new SuccessResponse();
+        else return new ErrorResponse(response.getReason(), response.getStatusCode());
     }
 
     private synchronized static HtmlPage requestAsClient(String api, Method method, WebCookie cookie, Request data){

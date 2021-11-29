@@ -63,6 +63,9 @@ public abstract class JSONResponse extends Response{
                             field.set(this, Double.parseDouble(value));
                         }
                         break;
+                    case "boolean":
+                        field.set(this, value.equals("true"));
+                        break;
                     case "java.util.Date":
                         field.set(this, format.parse(value));
                         break;

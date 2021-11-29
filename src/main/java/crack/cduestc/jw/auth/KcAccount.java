@@ -6,6 +6,8 @@ import crack.cduestc.jw.auth.func.ClazzFunction;
 import crack.cduestc.jw.auth.func.ScoreFunction;
 import crack.cduestc.jw.clazz.ClassTable;
 import crack.cduestc.jw.clazz.SelectableClass;
+import crack.cduestc.jw.eval.Evaluation;
+import crack.cduestc.jw.eval.EvaluationTable;
 import crack.cduestc.jw.exception.AuthorizationException;
 import crack.cduestc.jw.exception.NetworkException;
 import crack.cduestc.jw.exception.PasswordRegexException;
@@ -223,6 +225,35 @@ public class KcAccount implements AuthFunction, ScoreFunction, ClazzFunction {
         Response response = NetManager.undoSelectClass(cookie, classId, profileId);
         if(response.getCode() == 200) return;
         throw new IllegalStateException(((ErrorResponse)response).getReason());
+    }
+
+    @Override
+    public List<Evaluation> getEvalList() {
+        if(info == null) throw new AuthorizationException("账户未登录！");
+        Response response = NetManager.getEvaluationList(cookie);
+        if(response.getCode() != 200)
+            throw new IllegalStateException(((ErrorResponse)response).getReason());
+        EvaluationResponse evaluationResponse = (EvaluationResponse) response;
+        List<Evaluation> list = new ArrayList<>();
+        evaluationResponse.forEach(eval -> list.add(new Evaluation(eval)));
+        return list;
+    }
+
+    @Override
+    public EvaluationTable getEvalTable(Evaluation e) {
+        if(e.isStatus()) throw new IllegalStateException("已经评教完成，无法再次获取评估表单！");
+        if(info == null) throw new AuthorizationException("账户未登录！");
+        Response response = NetManager.getEvalTable(cookie, e);
+        if(response.getCode() != 200)
+            throw new IllegalStateException(((ErrorResponse)response).getReason());
+        return ((EvaluationTableResponse) response).getTable();
+    }
+
+    public void finishEval(EvaluationTable table){
+        if(info == null) throw new AuthorizationException("账户未登录！");
+        Response response = NetManager.finishEval(cookie, table);
+        if(response.getCode() != 200)
+            throw new IllegalStateException(((ErrorResponse)response).getReason());
     }
 
     public String getId() {

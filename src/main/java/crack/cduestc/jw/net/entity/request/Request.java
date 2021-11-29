@@ -7,7 +7,7 @@ import java.lang.reflect.Field;
 import java.util.function.Consumer;
 
 public abstract class Request {
-    public final void forEachAddData(Consumer<String[]> consumer){
+    public void forEachAddData(Consumer<String[]> consumer){
         try {
             for (Field field : this.getClass().getDeclaredFields()) {
                 if(!field.isAccessible()) field.setAccessible(true);

@@ -11,6 +11,9 @@
 * 如果喜欢本项目，请点个star⭐️
 
 ## 版本历史 ⚒
+* ### 2.1.0 - Release
+  * 添加一键评教功能
+  * 完成课程表获取最终调整
 * ### 2.0.5 - Release
   * 现在支持选修课程查询，以及快速进行报名（抢课）
   * 某些年级无法正常获取课程表 
@@ -96,6 +99,34 @@ public class Main {
             .getClassInOneDay(1)      //仅获取周一的课程
             .forEach(System.out::println);  //打印所有周一的课程
     account.logout();   //最好还是退出登陆！
+  }
+}
+```
+
+一键评教（新功能）
+```java
+public class Main {
+  public static void main(String[] args) {
+    //登陆你的账号
+    KcAccount account = KcAccount.create("学号", "密码");
+    account.login();
+    //获取评教列表，依次进行评教
+    account.getEvalList().forEach(evaluation -> {
+      //过滤已经完成的评教
+      if(evaluation.isStatus()) return;
+
+      //获取评教表单
+      EvaluationTable table = account.getEvalTable(evaluation);
+      //默认全部五星，也可以自己获取表项，一般情况下前17项是选项表，最后一项是文本表
+      EvaluationTable.OptionLine line = (EvaluationTable.OptionLine) table.getLines().get(0);
+      //选择四星（1-5分别代表五星到一星）
+      line.setOption(2);
+
+      //确认无误，直接提交表单
+      account.finishEval(table);
+      //评教完成
+      System.out.println(evaluation.getName()+"("+evaluation.getTeacher()+") 评教成功！");
+    });
   }
 }
 ```
